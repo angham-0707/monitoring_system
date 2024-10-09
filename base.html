@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Link to the compiled CSS file -->
+    <link rel="stylesheet" href="{{url_for('static', filename="styles.css")}}">
+    <title>Flask Authentication</title>
+</head>
+<body>
+    <div class="corner-image"></div>
+    <header>Network Monitoring</header>
+    {% block body %}
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <h2>Token Requests</h2>
+        <ul>
+        {% for request in token_requests %}
+            <li>
+                User {{ request.user.username }} requested a new token
+                <form action="{{ url_for('process_token_request', request_id=request.id) }}" method="post">
+                    <button type="submit">Process Request</button>
+                </form>
+            </li>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% endwith%}
+        {% endfor %}
+        </ul>
+        <!-- Other admin dashboard content -->
+    </div>
+    {% endblock %}
+</body>
+</html>

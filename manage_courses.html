@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        Manage Courses
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Manage Courses</h1>
+
+            <h2>Add New Course</h2>
+            <form action="{{ url_for('add_course') }}" method="POST">
+                <label for="title">Course Title:</label>
+                <input type="text" id="title" name="title" required>
+                <label for="description">Course Description:</label>
+                <textarea id="description" name="description" required></textarea>
+                <button type="submit" class="btn btn-primary">Add Course</button>
+            </form>
+
+            <h2>Existing Courses</h2>
+            <ul class="course-list">
+                {% for course in courses %}
+                <li>
+                    <strong>{{ course.name }}</strong>: {{ course.description }}
+                    <form action="{{ url_for('delete_course', course_id=course.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this course?')">Delete</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <a href="{{ url_for('admin_dashboard') }}" class="btn">Back to Admin Dashboard</a>
+        </div>
+    </main>
+</body>
+</html>

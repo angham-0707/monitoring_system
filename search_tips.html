@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Tips</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"><!-- Make sure to link your compiled CSS -->
+</head>
+<body>
+    <header> <!-- Added header for styling -->
+        <h1>Search Tips</h1>
+    </header>
+
+    <main>
+        <div class="container">
+            <form method="POST" class="search-form"> <!-- Added a class for form styling -->
+                <input type="text" name="keyword" placeholder="Search tips" class="input-field">
+                <button type="submit" class="btn">Search</button>
+            </form>
+            
+            <ul>
+                {% for tip in tips %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+            
+            <a href="{{ url_for('education') }}" class="btn">Back to Educational Features</a>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h1>Sign Up</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form id="signup-form" action="{{ url_for('register') }}" method="post">
+        <input 
+            type="text"
+            name="username"
+            placeholder="Username"
+            class="input-field"
+            required
+        >
+        <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            class="input-field"
+            required
+        >
+        <input 
+            type="password" 
+            name="password" 
+            placeholder="Password"
+            class="input-field"
+            required
+        >
+        <select name="sex" class="input-field" required>
+            <option value="">Select Sex</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <select name="country" class="input-field" required>
+            <option value="">Select Country</option>
+            {% for country in countries %}
+            <option value="{{ country }}">{{ country }}</option>
+            {% endfor %}
+        </select>
+        <input 
+            type="submit" 
+            value="Sign Up" 
+            class="btn btn-signup" 
+        >
+    </form>
+    <p>Already have an account? <a href="{{ url_for('home') }}">Sign In</a></p>
+</div>
+{% endblock %}

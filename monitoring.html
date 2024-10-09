@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Monitoring</title>
+  
+</head>
+<body>
+    <div class="container">
+        <h1>Informations sur le Système</h1>
+        <div id="systemInfo" class="system-info"></div>
+        <div id="loader" class="loader">
+            <p>Chargement des informations système...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loader = document.getElementById('loader');
+            const systemInfoDiv = document.getElementById('systemInfo');
+            loader.style.display = 'block'; // Affiche le message de chargement
+
+            fetch('/system_info')
+                .then(response => response.json())
+                .then(data => {
+                    loader.style.display = 'none'; // Cache le message de chargement
+                    const systemInfoHTML = `
+                        <p><strong>Nom de la machine :</strong> ${data.hostname}</p>
+                        <p><strong>Système d'exploitation :</strong> ${data.system} ${data.release}</p>
+                        <p><strong>Version :</strong> ${data.version}</p>
+                        <p><strong>Architecture :</strong> ${data.architecture}</p>
+                        <p><strong>Cœurs CPU :</strong> ${data.cpu_cores}</p>
+                        <p><strong>Threads CPU :</strong> ${data.cpu_threads}</p>
+                        <p><strong>Utilisation CPU :</strong> ${data.cpu_usage}%</p>
+                        <p><strong>Mémoire totale :</strong> ${data.total_memory}</p>
+                        <p><strong>Mémoire disponible :</strong> ${data.available_memory}</p>
+                        <p><strong>Mémoire utilisée :</strong> ${data.used_memory}</p>
+                        <p><strong>Utilisation mémoire :</strong> ${data.memory_usage_percent}%</p>
+                    `;
+                    systemInfoDiv.innerHTML = systemInfoHTML;
+                })
+                .catch(error => {
+                    loader.style.display = 'none';
+                    systemInfoDiv.innerHTML = `<p>Erreur de chargement des informations système.</p>`;
+                });
+        });
+    </script>
+</body>
+</html>

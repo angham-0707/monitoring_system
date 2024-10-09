@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Admin Dashboard - Network Visualization</title>
+    <style>
+        .border {
+            border: 1px solid #ccc;
+        }
+        .rounded {
+            border-radius: 8px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .btn {
+            margin: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Welcome, Admin {{username}}!</h1>
+        <p>This is your admin dashboard</p>
+        <a href="{{ url_for('manage_users') }}" class="btn">Manage Users</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-logout">Logout</a>
+        <a href="{{ url_for('manage_courses') }}" class="btn btn-primary">Manage Courses</a>
+
+        <!-- Button to find IP address -->
+        <button id="find-ip-btn" class="btn btn-primary">Find My IP Address</button>
+        <!-- Button to hide IP address -->
+        <button id="hide-ip-btn" class="btn btn-secondary" style="display:none;">Hide My IP Address</button>
+        
+        <!-- Paragraph to display the IP address -->
+        <p id="ip-address"></p>
+
+        <!-- CIDR Calculator Form -->
+        <h2>CIDR Calculator</h2>
+        <form id="cidr-form">
+            <label for="cidr">Enter IP/CIDR:</label>
+            <input type="text" id="cidr" name="cidr" placeholder="e.g., 192.168.1.0/24">
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </form>
+
+        <!-- Display CIDR Calculation Results -->
+        <div id="cidr-results" style="display: none;">
+            <h3>CIDR Calculation Results:</h3>
+            <p><strong>Network Address:</strong> <span id="network-address"></span></p>
+            <p><strong>Broadcast Address:</strong> <span id="broadcast-address"></span></p>
+            <p><strong>Subnet Mask:</strong> <span id="subnet-mask"></span></p>
+            <p><strong>Total Number of Addresses:</strong> <span id="num-addresses"></span></p>
+        </div>
+
+        <!-- Display error message -->
+        <div id="cidr-error" class="alert alert-danger" style="display: none;"></div>
+
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // NetworkVisualization class
+        class NetworkVisualization {
+            constructor(elementId) {
+                this.element = document.getElementById(elementId);
+                this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                this.svg.setAttribute("width", "300");
+                this.svg.setAttribute("height", "300");
+                this.svg.classList.add("border", "rounded");
+                this.element.appendChild(this.svg);
+            }
+
+            updateNetwork(users) {
+                // Clear previous network
+                while (this.svg.firstChild) {
+                    this.svg.removeChild(this.svg.firstChild);
+                }
+
+                // Calculate positions for nodes
+                const nodes = users.map((user, index) => ({
+                    id: user.id,
+                    name: user.ip,
+                    x: 150 + 100 * Math.cos(2 * Math.PI * index / users.length),
+                    y: 150 + 100 * Math.sin(2 * Math.PI * index / users.length),
+                }));
+
+                // Create links between nodes
+                const links = [];
+                for (let i = 0; i < nodes.length; i++) {
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        links.push({
+                            source: nodes[i],
+                            target: nodes[j],
+                        });
+                    }
+                }
+
+                // Draw links
+                links.forEach(link => {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", link.source.x);
+                    line.setAttribute("y1", link.source.y);
+                    line.setAttribute("x2", link.target.x);
+                    line.setAttribute("y2", link.target.y);
+                    line.setAttribute("stroke", "#999");
+                    line.setAttribute("stroke-width", "1");
+                    this.svg.appendChild(line);
+                });
+
+                // Draw nodes
+                nodes.forEach(node => {
+                    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", node.x);
+                    circle.setAttribute("cy", node.y);
+                    circle.setAttribute("r", "5");
+                    circle.setAttribute("fill", "#69b3a2");
+
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", node.x);
+                    text.setAttribute("y", node.y + 15);
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("font-size", "10");
+                    text.textContent = node.name;
+
+                    group.appendChild(circle);
+                    group.appendChild(text);
+                    this.svg.appendChild(group);
+                });
+            }
+        }
+
+        // Initialize network visualization and pass the machine data from Flask
+        document.addEventListener("DOMContentLoaded", function () {
+            const pcs = {{ pcs | tojson }}; // This converts the pcs object into JSON
+            const networkViz = new NetworkVisualization("network-container");
+            networkViz.updateNetwork(pcs); // Ensure this matches the structure of your nodes
+
+            // Refresh button to update network visualization
+            document.getElementById('refresh-network').addEventListener('click', function () {
+                networkViz.updateNetwork(pcs);
+            });
+        });
+
+        // Find IP address button click event
+        document.getElementById('find-ip-btn').addEventListener('click', function() {
+            fetch('{{ url_for("get_ip") }}')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ip-address').innerText = 'Your IP Address is: ' + data.ip;
+                    document.getElementById('hide-ip-btn').style.display = 'inline-block';
+                    document.getElementById('find-ip-btn').style.display = 'none';
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        // Hide IP address button click event
+        document.getElementById('hide-ip-btn').addEventListener('click', function() {
+            document.getElementById('ip-address').innerText = '';
+            document.getElementById('hide-ip-btn').style.display = 'none';
+            document.getElementById('find-ip-btn').style.display = 'inline-block';
+        });
+
+        // CIDR Calculator
+        document.getElementById('cidr-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var cidr = document.getElementById('cidr').value;
+            
+            fetch('{{ url_for("cidr_calculator") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'cidr=' + encodeURIComponent(cidr)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('cidr-error').textContent = data.error;
+                    document.getElementById('cidr-error').style.display = 'block';
+                    document.getElementById('cidr-results').style.display = 'none';
+                } else {
+                    document.getElementById('network-address').textContent = data.network_address;
+                    document.getElementById('broadcast-address').textContent = data.broadcast_address;
+                    document.getElementById('subnet-mask').textContent = data.subnet_mask;
+                    document.getElementById('num-addresses').textContent = data.num_addresses;
+                    document.getElementById('cidr-results').style.display = 'block';
+                    document.getElementById('cidr-error').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('cidr-error').textContent = 'An error occurred. Please try again.';
+                document.getElementById('cidr-error').style.display = 'block';
+                document.getElementById('cidr-results').style.display = 'none';
+            });
+        });
+    </script>
+{% endblock %}

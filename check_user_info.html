@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Monitoring</title>
+    <style>
+        /* Existing styles */
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+            background-image: url('3161025.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .container {
+            background-color: #E1F4FC;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 80%;
+            margin: 30px auto;
+        }
+
+        h1 {
+            color: #4fd89f;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .system-info {
+            text-align: left;
+        }
+
+        .system-info p {
+            margin: 10px 0;
+        }
+
+        .system-info strong {
+            color: #4fd89f;
+        }
+
+        .loader {
+            display: none;
+            margin-top: 20px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .btn {
+            background-color: #4fd89f;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: #3abc87;
+        }
+
+        /* New styles for button container */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        /* Style for the back button */
+        .btn-back {
+            background-color: #7dbafc;
+        }
+
+        .btn-back:hover {
+            background-color: #71aff1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .system-info {
+                font-size: 0.9rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Informations sur le Système</h1>
+        <div id="systemInfo" class="system-info"></div>
+        <div id="loader" class="loader">
+            <p>Chargement des informations système...</p>
+        </div>
+        <div class="button-container">
+            <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">Retour au Tableau de Bord</a>
+            <button id="refreshBtn" class="btn">Rafraîchir les informations</button>
+        </div>
+    </div>
+
+    <script>
+        function loadSystemInfo() {
+            const loader = document.getElementById('loader');
+            const systemInfoDiv = document.getElementById('systemInfo');
+            loader.style.display = 'block';
+            systemInfoDiv.innerHTML = '';
+
+            fetch('/system_info')
+                .then(response => response.json())
+                .then(data => {
+                    loader.style.display = 'none';
+                    const systemInfoHTML = `
+                        <p><strong>Nom de la machine :</strong> ${data.hostname}</p>
+                        <p><strong>Système d'exploitation :</strong> ${data.system} ${data.release}</p>
+                        <p><strong>Version :</strong> ${data.version}</p>
+                        <p><strong>Architecture :</strong> ${data.architecture}</p>
+                        <p><strong>Cœurs CPU :</strong> ${data.cpu_cores}</p>
+                        <p><strong>Threads CPU :</strong> ${data.cpu_threads}</p>
+                        <p><strong>Utilisation CPU :</strong> ${data.cpu_usage}%</p>
+                        <p><strong>Mémoire totale :</strong> ${data.total_memory}</p>
+                        <p><strong>Mémoire disponible :</strong> ${data.available_memory}</p>
+                        <p><strong>Mémoire utilisée :</strong> ${data.used_memory}</p>
+                        <p><strong>Utilisation mémoire :</strong> ${data.memory_usage_percent}%</p>
+                    `;
+                    systemInfoDiv.innerHTML = systemInfoHTML;
+                })
+                .catch(error => {
+                    loader.style.display = 'none';
+                    systemInfoDiv.innerHTML = `<p>Erreur de chargement des informations système.</p>`;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadSystemInfo();
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.addEventListener('click', loadSystemInfo);
+        });
+    </script>
+</body>
+</html>

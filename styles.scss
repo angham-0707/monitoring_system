@@ -1,0 +1,292 @@
+// Variables
+$colors: (
+  primary: #4fd89f,
+  primary-hover: darken(#4fd89f, 10%),
+  secondary: #FFFFFF,
+  secondary-hover: darken(#FFFFFF, 10%),
+  text: #333,
+  background: #f5f5f5,
+  container-bg: #ffffff,
+  subtext: #666,
+  error: #dc3545,
+  success: #34C759
+);
+
+$font-stack: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+$spacing: (
+  small: 10px,
+  medium: 20px,
+  large: 30px
+);
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin box-shadow($opacity: 0.1) {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, $opacity);
+}
+
+@mixin button(
+  $bg-color, 
+  $text-color, 
+  $border-color: $bg-color, 
+  $hover-bg-color: darken($bg-color, 10%), 
+  $hover-border-color: darken($border-color, 10%)
+) {
+  background-color: $bg-color;
+  color: $text-color;
+  padding: spacing(small) spacing(medium);
+  border: 2px solid $border-color;
+  border-radius: spacing(small);
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  @include box-shadow;
+
+  &:hover {
+    background-color: $hover-bg-color;
+    border-color: $hover-border-color;
+  }
+}
+
+@mixin input-field {
+  width: 100%;
+  padding: spacing(small);
+  border: 1px solid #ccc;
+  border-radius: spacing(small);
+  font-size: 1rem;
+  font-family: $font-stack;
+}
+
+// Functions
+@function color($key) {
+  @return map-get($colors, $key);
+}
+
+@function spacing($key) {
+  @return map-get($spacing, $key);
+}
+
+// Base styles
+body {
+  background-color: color(background);
+  font-family: $font-stack;
+  color: color(text);
+  @include flex-center;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  text-align: center;
+  background-image: url('3161025.jpg');
+}
+
+.page-wrapper {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - #{spacing(large)} - #{spacing(large)});
+  overflow-x: hidden;
+}
+
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.5s ease-in-out;
+
+  &.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+header {
+  width: 100%;
+  background-color: color(primary);
+  @include box-shadow;
+  padding: spacing(large) 0;
+  margin: 0 0 spacing(large) 0;
+  font-size: 2.5rem;
+  color: color(secondary);
+
+  &:hover {
+    @include box-shadow(0.2);
+  }
+}
+
+main {
+  @include flex-center;
+  flex: 1;
+  width: 100%;
+  padding: spacing(medium);
+  background-color: #cceefa;
+}
+
+// Fix for button alignment
+button-group {
+  @include flex-center;
+  flex-direction: row;
+  gap: spacing(medium); // Add some space between buttons
+  margin-top: spacing(large);
+}
+
+.container {
+  background-color: color(container-bg);
+  border-radius: spacing(small);
+  padding: spacing(medium);
+  @include box-shadow;
+  max-width: 800px;
+  width: 100%;
+}
+
+.input-field {
+  @include input-field;
+  margin-bottom: spacing(medium);
+}
+
+.btn {
+  margin-bottom: spacing(medium);
+  @include button(color(primary), color(secondary), color(primary));
+
+  &-error {
+    @include button(color(error), color(container-bg), color(error));
+  }
+
+  &-success {
+    @include button(color(success), color(container-bg), color(success));
+  }
+
+  &:hover {
+    background-color: color(primary-hover);
+    border-color: color(primary-hover);
+  }
+}
+
+.generate-token-btn {
+  margin-right: spacing(small);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: spacing(small);
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+}
+
+.user-info form {
+  display: flex;
+  flex-direction: column;
+  gap: spacing(small);
+
+  label {
+    font-weight: bold;
+  }
+
+  input, textarea {
+    @include input-field;
+  }
+
+  button {
+    align-self: flex-start;
+    @include button(color(primary), color(secondary));
+  }
+}
+
+#delete-account {
+  margin-top: spacing(medium);
+  @include button(color(error), color(secondary));
+}
+
+.error {
+  color: color(error);
+  font-weight: bold;
+}
+
+.success {
+  color: color(success);
+  font-weight: bold;
+}
+
+// Media queries
+@media (max-width: 768px) {
+  header {
+    font-size: 2rem;
+    padding: spacing(medium) 0;
+    margin: 0 0 spacing(medium) 0;
+  }
+
+  .container {
+    padding: spacing(medium);
+  }
+
+  button-group {
+    flex-direction: column; // Stack buttons vertically on mobile
+    gap: spacing(small);
+  }
+
+  .generate-token-btn {
+    margin-right: 0;
+    margin-bottom: spacing(small);
+  }
+  .button {
+      background-color: red;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block; /* Make buttons block elements for better centering */
+      margin: 0 auto; /* Center buttons horizontally */
+  }
+}
+/* Style for the container */
+.container {
+  background-color: #E1F4FC;
+  padding: 20px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin: 50px auto;
+  width: 80%;
+  text-align: center;
+}
+
+/* Button group styling using Flexbox */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Adds space between buttons */
+  margin-top: 20px;
+}
+
+/* Button styling */
+.btn {
+  padding: 10px 20px;
+  background-color: #28A745;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #218838;
+}
+
+.btn-success {
+  background-color: #007BFF;
+}
+
+.btn-success:hover {
+  background-color: #0069D9;
+}

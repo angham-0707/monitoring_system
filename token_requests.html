@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h1>Token Requests</h1>
+    {% if requests %}
+        <ul>
+        {% for request in requests %}
+            <li>
+                User {{ request.user.username }} requested a token on {{ request.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                <button class="btn btn-primary process-request-btn" data-request-id="{{ request.id }}">Process Request</button>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending token requests.</p>
+    {% endif %}
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<script>
+document.querySelectorAll('.process-request-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const requestId = this.getAttribute('data-request-id');
+        fetch('/process_token_request/' + requestId, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.closest('li').remove();
+            }
+            alert(data.message);
+        });
+    });
+});
+</script>
+{% endblock %}

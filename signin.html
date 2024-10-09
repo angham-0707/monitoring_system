@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h1>Sign In</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form id="signin-form" action="{{ url_for('signin') }}" method="post">
+        <input 
+            type="text"
+            name="username"
+            placeholder="Username"
+            class="input-field"
+            required
+        >
+        <input 
+            type="password" 
+            name="password" 
+            placeholder="Password"
+            class="input-field"
+            required
+        >
+        <input 
+            type="text" 
+            name="token" 
+            placeholder="Token (if applicable)"
+            class="input-field"
+        >
+        <input 
+            type="submit" 
+            value="Sign In" 
+            class="btn btn-signin" 
+        >
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
+</div>
+{% endblock %}

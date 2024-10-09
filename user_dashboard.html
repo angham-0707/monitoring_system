@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="path/to/your/css/bootstrap.min.css"> <!-- Include your CSS here -->
+    <style>
+        .button {
+          background-color: red;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+      </style>
+
+      <style>
+        #network-visualization {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        .computer-icon {
+            fill: #69b3a2;
+            stroke: #4a7a6c;
+            stroke-width: 0.5;
+        }
+        .node-label {
+            font-size: 12px;
+            fill: #333;
+            text-anchor: middle;
+        }
+    </style>
+
+</head>
+
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h1>Welcome, {{ username }}!</h1>
+    <p>This is your user dashboard.</p>
+
+    <h2>Network Visualization</h2>
+    <div id="network-visualization"></div>
+
+    <!-- Button to find IP address -->
+    <button id="find-ip-btn" class="btn btn-primary">Find My IP Address</button>
+    <button id="hide-ip-btn" class="btn btn-secondary" style="display:none;">Hide My IP Address</button>
+    <p id="ip-address"></p>
+
+<!-- CIDR Calculator Form -->
+<h2>CIDR Calculator</h2>
+<form id="cidr-form" action="/cidr_calculator" method="post">
+    <label for="cidr">Enter IP/CIDR:</label>
+    <input type="text" id="cidr" name="cidr" placeholder="e.g., 192.168.1.0/24" required>
+    <button type="submit" class="btn btn-primary">Calculate</button>
+</form>
+
+<div id="cidr-results" style="display: none;">
+    <h3>CIDR Calculation Results:</h3>
+    <p><strong>Network Address:</strong> <span id="network-address"></span></p>
+    <p><strong>Broadcast Address:</strong> <span id="broadcast-address"></span></p>
+    <p><strong>Subnet Mask:</strong> <span id="subnet-mask"></span></p>
+    <p><strong>Total Number of Addresses:</strong> <span id="num-addresses"></span></p>
+</div>
+
+<div id="cidr-error" class="alert alert-danger" style="display: none;"></div>
+
+    <!-- Network Command Section -->
+    <h2>Network Commands</h2>
+    <form id="command-form">
+        <label for="command">Choose a command:</label>
+        <select id="command" name="command">
+            {% for command_name, command in commands.items() %}
+                <option value="{{ command }}">{{ command_name }}</option>
+            {% endfor %}
+        </select>
+        <label for="target">Target (IP or domain):</label>
+        <input type="text" id="target" name="target" placeholder="Optional (used for some commands)">
+        <button type="submit" class="btn btn-primary">Execute</button>
+    </form>
+
+    <h2>Result:</h2>
+    <pre id="result"></pre>
+
+    <!-- User Info Section -->
+    <div class="user-info">
+        <h2>User Information</h2>
+        <a href="{{ url_for('check_user_info') }}" class="btn">Check Information</a>
+        <button id="delete-account" class="btn btn-danger">Delete Account</button>
+    </div>
+   
+
+    <!-- Additional Info Section -->
+    <h2>Additional Information</h2>
+        <form id="info-form">
+            <label for="user-info">Enter some information:</label>
+            <input type="text" id="user-info" name="user-info" placeholder="Enter your information here..." required>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <div id="info-display"></div>
+
+  
+    <table>
+        <tbody>
+            {% for course in courses %}
+                <tr>
+                    <td>{{ course.name }}</td>
+                    <td>{{ course.description }}</td>
+                    <td>{{ course.creation_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_course', course_id=course.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+               
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Educational Features Section -->
+    <h2>Educational Features</h2>
+    <div style="text-align: center;">
+        <ul style="list-style-type: none; padding: 0; display: flex; gap: 20px;">
+            <li>
+                <a href="{{ url_for('view_course') }}" class="btn btn-danger">View Course</a>
+            </li>
+            <li>
+                <a href="{{ url_for('search_tips') }}" class="btn btn-danger">Search Tips</a>
+            </li>
+        </ul>
+    
+    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-logout custom-button"  style="margin-top: 20px;">Logout</a>
+
+</div>
+
+<script>
+
+    class NetworkVisualization {
+        constructor(elementId) {
+            this.element = document.getElementById(elementId);
+            this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.svg.setAttribute("width", "100%");
+            this.svg.setAttribute("height", "100%");
+            this.svg.classList.add("border", "rounded");
+            this.element.appendChild(this.svg);
+
+            // Define the computer icon as a path
+            this.defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            this.svg.appendChild(this.defs);
+            
+            const computerIcon = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            computerIcon.setAttribute("id", "computer-icon");
+            computerIcon.setAttribute("d", "M2 2v16h20V2H2zm18 14H4V4h16v12zM6 6h12v8H6V6z");
+            
+            const iconSymbol = document.createElementNS("http://www.w3.org/2000/svg", "symbol");
+            iconSymbol.setAttribute("id", "computer-symbol");
+            iconSymbol.setAttribute("viewBox", "0 0 24 24");
+            iconSymbol.appendChild(computerIcon);
+            
+            this.defs.appendChild(iconSymbol);
+        }
+
+        updateNetwork(users) {
+            // Clear previous network
+            while (this.svg.lastChild && this.svg.lastChild !== this.defs) {
+                this.svg.removeChild(this.svg.lastChild);
+            }
+
+            const svgRect = this.svg.getBoundingClientRect();
+            const centerX = svgRect.width / 2;
+            const centerY = svgRect.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.8;
+
+            // Calculate positions for nodes
+            const nodes = users.map((user, index) => ({
+                id: user.id,
+                name: user.username,
+                x: centerX + radius * Math.cos(2 * Math.PI * index / users.length),
+                y: centerY + radius * Math.sin(2 * Math.PI * index / users.length),
+            }));
+
+            // Create links between nodes
+            const links = [];
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    links.push({
+                        source: nodes[i],
+                        target: nodes[j],
+                    });
+                }
+            }
+
+            // Draw links
+            links.forEach(link => {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", link.source.x);
+                line.setAttribute("y1", link.source.y);
+                line.setAttribute("x2", link.target.x);
+                line.setAttribute("y2", link.target.y);
+                line.setAttribute("stroke", "#999");
+                line.setAttribute("stroke-width", "1");
+                this.svg.appendChild(line);
+            });
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                group.setAttribute("transform", `translate(${node.x - 12}, ${node.y - 12})`);
+
+                const icon = document.createElementNS("http://www.w3.org/2000/svg", "use");
+                icon.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#computer-symbol");
+                icon.setAttribute("width", "24");
+                icon.setAttribute("height", "24");
+                icon.classList.add("computer-icon");
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", "12");
+                text.setAttribute("y", "32");
+                text.classList.add("node-label");
+                text.textContent = node.name;
+
+                group.appendChild(icon);
+                group.appendChild(text);
+                this.svg.appendChild(group);
+            });
+        }
+    }
+
+    // Initialize and update the network visualization
+    const networkViz = new NetworkVisualization('network-visualization');
+
+    function fetchAndUpdateNetwork() {
+        fetch('/get_network_users')
+            .then(response => response.json())
+            .then(data => {
+                networkViz.updateNetwork(data.users);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Initial fetch
+    fetchAndUpdateNetwork();
+
+    // Periodically update the network (every 30 seconds)
+    setInterval(fetchAndUpdateNetwork, 30000);
+
+    // Find IP address button click event
+    document.getElementById('find-ip-btn').addEventListener('click', async () => {
+        const response = await fetch('{{ url_for("get_ip") }}');
+        const data = await response.json();
+        document.getElementById('ip-address').innerText = 'Your IP Address is: ' + data.ip;
+        document.getElementById('find-ip-btn').style.display = 'none';
+        document.getElementById('hide-ip-btn').style.display = 'inline-block';
+    });
+
+    // Hide IP address button click event
+    document.getElementById('hide-ip-btn').addEventListener('click', () => {
+        document.getElementById('ip-address').innerText = '';
+        document.getElementById('find-ip-btn').style.display = 'inline-block';
+        document.getElementById('hide-ip-btn').style.display = 'none';
+    });
+
+    document.getElementById('cidr-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+    
+        const formData = new FormData(this);
+        fetch(this.action, {
+            method: this.method,
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json(); // Assuming your server responds with JSON
+        })
+        .then(data => {
+            // Update the results only if there's no error
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            document.getElementById('network-address').textContent = data.network_address;
+            document.getElementById('broadcast-address').textContent = data.broadcast_address;
+            document.getElementById('subnet-mask').textContent = data.subnet_mask;
+            document.getElementById('num-addresses').textContent = data.num_addresses;
+    
+            // Show results and hide error
+            document.getElementById('cidr-results').style.display = 'block';
+            document.getElementById('cidr-error').style.display = 'none';
+        })
+        .catch(error => {
+            // Show error message
+            document.getElementById('cidr-error').textContent = 'Error: ' + error.message;
+            document.getElementById('cidr-error').style.display = 'block';
+            document.getElementById('cidr-results').style.display = 'none';
+        });
+    });
+    
+   
+   
+   
+
+    // Handle network command form submission
+    document.getElementById('command-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(document.getElementById('command-form'));
+        const response = await fetch('/execute', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        document.getElementById('result').textContent = result.output || result.error;
+    });
+    // Modified handle additional info form submission
+    document.getElementById('info-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const userInfo = document.getElementById('user-info').value;
+        const username = "{{ username }}";
+
+        if (userInfo) {
+            const newMessage = document.createElement('p');
+            newMessage.innerText = `${username}:[${userInfo}]`;
+            document.getElementById('info-display').appendChild(newMessage);
+        }
+
+        document.getElementById('user-info').value = '';
+    });
+
+    // Handle delete account button click
+    document.getElementById("delete-account").addEventListener("click", function() {
+        if (confirm("Are you sure you want to delete your account?")) {
+            fetch("/delete_user", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    window.location.href = "/"; // Redirect to home page after deletion
+                } else {
+                    alert("An error occurred. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error("Error deleting user:", error);
+                alert("An error occurred. Please try again.");
+            });
+        }
+    });
+    // Assuming you have a button with the ID "my-button"
+document.getElementById("my-button").addEventListener("click", function() {
+    fetch("/your-flask-route")
+      .then(response => response.json())
+      .then(data => {
+        // Handle the response data here
+        console.log(data);
+      })
+      .catch(error => {
+        console.error("Error:", error);   
+  
+      });
+  });
+</script>
+{% endblock %}
+</html>
